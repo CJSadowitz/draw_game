@@ -87,4 +87,27 @@ class Screen:
             Screen.window = pygame.display.set_mode((Screen.SCREEN_WIDTH, Screen.SCREEN_HEIGHT), pygame.RESIZABLE)
             Screen.is_fullscreen = True
         pygame.display.set_caption("Draw")
-
+    # Generate a button rectangle, and return true weather or not mouse is over its position
+    def menu_button_rect(rgba, four_pos_tuple):
+        rect_coords_4_tuple = Screen.to_rect_coords(four_pos_tuple)
+        x_left, y_top, width, height = rect_coords_4_tuple
+        Screen.draw_rect(rgba, four_pos_tuple)
+        if (pygame.mouse.get_pos()[0] >= (x_left) and
+            pygame.mouse.get_pos()[1] >= (y_top) and
+            pygame.mouse.get_pos()[0] <= (x_left + width) and
+            pygame.mouse.get_pos()[1] <= (y_top + height)):
+            return True
+        else:
+            return False
+    
+    def menu_button_sprite(sprite, four_pos_tuple):
+        rect_coords_4_tuple = Screen.to_rect_coords(four_pos_tuple)
+        x_left, y_top, width, height = rect_coords_4_tuple
+        Screen.draw_sprite(sprite, four_pos_tuple)
+        if (pygame.mouse.get_pos()[0] >= (x_left) and
+            pygame.mouse.get_pos()[1] >= (y_top) and
+            pygame.mouse.get_pos()[0] <= (x_left + width) and
+            pygame.mouse.get_pos()[1] <= (y_top + height)):
+            return True
+        else:
+            return False

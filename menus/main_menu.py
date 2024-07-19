@@ -1,9 +1,7 @@
 import pygame
 
-from menus.auto_aspr import Screen
 
-def title_screen():
-    Screen()
+def title_screen(Screen):
     running = True
     while running:
         for event in pygame.event.get():
@@ -12,7 +10,15 @@ def title_screen():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_F11:
                     Screen.toggle_fullscreen()
-        Screen.draw_rect((0, 0, 0), (0, 0, 1, 1))
-        Screen.draw_rect((255,0,0), (0.25, 0.25, 0.75, 0.75))
+        # Play_button
+        play_button = Screen.menu_button_rect((255, 0, 0), (0.25, 0.25, 0.75, 0.75))
+        if (pygame.mouse.get_just_released()[0]):
+            if (play_button):
+                # Logic for selecting different menus
+                running = False
+                return "play"
+
         pygame.display.update()
-    pass
+    return "main_menu"
+
+
