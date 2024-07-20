@@ -4,7 +4,7 @@ import pygame
 def title_screen(Screen):
     running = True
     while running:
-        Screen.draw_rect((0, 0, 0), (0, 0, 1, 1))
+        Screen.draw_rect((10, 10, 10), (0, 0, 1, 1))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
