@@ -10,6 +10,8 @@ from menus.lan_menu import lan_screen
 from menus.settings_menu import settings_screen
 from menus.online_menu import online_screen
 from menus.auto_aspr import Screen
+from menus.lan_lobby import lan_lobby_screen
+from lan.client import client
 from lan.server import host
 
 def main():
@@ -32,14 +34,17 @@ def main():
             case "settings":
                 display = settings_screen(Screen)
             case "host":
-                print("Do we make it here")
-                host_thread = threading.Thread(target=host, args=(1,))
+                host_thread = threading.Thread(target=host, args=(59,))
                 host_thread.start()
-                display = title_screen(Screen)
+                display = lan_lobby_screen(Screen)
+                # if display == "lan": # Shut down the servers
+                
                 # Show lobby of current players
                 # Go to play logic (Host starts game)
             case "connect":
-                break
+                client_thread = threading.Thread(target=client)
+                client_thread.start()
+                display = lan_lobby_screen(Screen)
                 # Show window to join avalible servers
                 # Once joined show the lobby of current players (Cannot start game)
             case "lanplay":

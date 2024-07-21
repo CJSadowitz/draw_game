@@ -11,8 +11,19 @@ def discover_server():
         time.sleep(1)
 
 def echo_server(seed):
+    local_ip = ""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(0)
+    try:
+        s.connect(('10.254.254.254', 1))
+        local_ip = s.getsockname()[0]
+    except Exception:
+        local_ip = '127.0.0.1'
+    finally:
+        s.close()
+
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((socket.gethostbyname(socket.gethostname()), 36258))
+    server.bind((local_ip, 36258))
     server.listen(4)
 
     clients = []
@@ -20,7 +31,7 @@ def echo_server(seed):
         client_socket, addr = server.accept()
         clients.append(client_socket)
         print(f"Connection from {addr}")
-        first_message = clients.index(client_socket) + seed
+        first_message = str(clients.index(client_socket)) + str(seed)
         print(first_message)
         client_socket.send(first_message.encode('utf-8'))
         client_handler = threading.Thread(target=handle_client, args=(client_socket,))
