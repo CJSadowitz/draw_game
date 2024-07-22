@@ -3,6 +3,7 @@ Game loop. Calls appropriate networking engine, and display functions
 """
 import pygame
 import threading
+import time
 
 from menus.main_menu import title_screen
 from menus.play_menu import play_options_screen
@@ -12,7 +13,7 @@ from menus.online_menu import online_screen
 from menus.auto_aspr import Screen
 from menus.lan_lobby import lan_lobby_screen
 from lan.client import client
-from lan.server import host
+from lan.server import Server
 
 def main():
     running = True
@@ -30,12 +31,21 @@ def main():
             case "online":
                 display = online_screen(Screen)
             case "lan":
+                try:
+                    server.stop()
+                    del server
+                except:
+                    print("Server DNE")
                 display = lan_screen(Screen)
             case "settings":
                 display = settings_screen(Screen)
             case "host":
-                host_thread = threading.Thread(target=host, args=(59,))
+                server = Server()
+                host_thread = threading.Thread(target=server.host, args=(59,))
                 host_thread.start()
+                time.sleep(1)
+                # client_thread = threading.Thread(target=client)
+                # client_thread.start()
                 display = lan_lobby_screen(Screen)
                 # if display == "lan": # Shut down the servers
                 

@@ -3,65 +3,98 @@ import threading
 import time
 
 # This needs to be running in the background so reconnects can happen
-def discover_server():
-    discover_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    discover_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    while True:
-        discover_socket.sendto(b"Game Server", ('<broadcast>', 37020))
-        time.sleep(1)
+class Server:
 
-def echo_server(seed):
-    local_ip = ""
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(0)
-    try:
-        s.connect(('10.254.254.254', 1))
-        local_ip = s.getsockname()[0]
-    except Exception:
-        local_ip = '127.0.0.1'
-    finally:
-        s.close()
+    def __init__(self):
+        self.clients = []
+        self.threads = []
+        self.stop_event = False
 
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((local_ip, 36258))
-    server.listen(4)
+    def discover_server(self):
+        print("discover_server: started")
+        discover_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        discover_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        while not self.stop_event:
+            discover_socket.sendto(b"Game Server", ('<broadcast>', 37020))
+            time.sleep(1)
+        print("discover_server: closed")
 
-    clients = []
-    while True:
-        client_socket, addr = server.accept()
-        clients.append(client_socket)
-        print(f"Connection from {addr}")
-        first_message = str(clients.index(client_socket)) + str(seed)
-        print(first_message)
-        client_socket.send(first_message.encode('utf-8'))
-        client_handler = threading.Thread(target=handle_client, args=(client_socket,))
-        client_handler.start()
-
-def handle_client(client_socket):
-    while True:
+    def echo_server(self, seed):
+        # Get the ip of the host's server
+        local_ip = ""
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
         try:
-            message = client_socket.recv(1024).decode('utf-8')
-            if not message:
-                break
-            print(f"Received: {message}")
-            broadcast_message(f"Broadcast: {message}", client_socket)
-        except:
-            break
-    client_socket.close()
-    clients.remove(client_socket)   
+            s.connect(('10.254.254.254', 1))
+            local_ip = s.getsockname()[0]
+        except Exception:
+            local_ip = '127.0.0.1'
+        finally:
+            s.close()
 
-def broadcast_message(message, sender_socket):
-    for client in clients:
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.bind((local_ip, 36258))
+        server.listen(4)
+        server.settimeout(1)
+
+        print("echo_server: started")
+        while not self.stop_event:
+            try:
+                client_socket, addr = server.accept()
+                self.clients.append(client_socket)
+                print(f"Connection from {addr}")
+                # Send new player their id and seed
+                first_message = str(self.clients.index(client_socket)) + str(seed)
+                client_socket.send(first_message.encode('utf-8'))
+                client_handler = threading.Thread(target=self.handle_client, args=(client_socket,))
+                self.threads.append(client_handler)
+                client_handler.start()
+            except socket.timeout:
+                continue
+        print("echo_server: closed")
+
+    def handle_client(self, client_socket):
+        print("handle_client: started")
+        client_socket.settimeout(1)
+        while not self.stop_event:
+            try:
+                message = client_socket.recv(1024).decode('utf-8')
+                if not message:
+                    continue
+                print(f"Received: {message}")
+                broadcast_message(f"Broadcast: {message}", client_socket)
+            except socket.timeout:
+                continue
+            except:
+                if client_socket not in self.clients:
+                    break
+        client_socket.close()
+        print("handle_client: closed")
         try:
-            client.send(message.encode('utf-8'))
+            self.clients.remove(client_socket)
         except:
-            client.close()
-            clients.remove(client)
+            print("Client DNE")
 
-def host(seed):
-    discover_thread = threading.Thread(target=discover_server)
-    discover_thread.start()
-    echo_thread = threading.Thread(target=echo_server, args=(seed,))
-    echo_thread.start()
-    print("Server Started")
+    def broadcast_message(self, message, sender_socket):
+        for client in self.clients:
+            try:
+                client.send(message.encode('utf-8'))
+            except:
+                client.close()
+                self.clients.remove(client)
+
+    def stop(self):
+        self.stop_event = True
+        for thread in self.threads:
+            thread.join()
+            print("Joined a thread")
+
+    def host(self, seed):
+        discover_thread = threading.Thread(target=self.discover_server)
+        self.threads.append(discover_thread)
+        discover_thread.start()
+        echo_thread = threading.Thread(target=self.echo_server, args=(seed,))
+        self.threads.append(echo_thread)
+        echo_thread.start()
+        print("Server Started")
     

@@ -15,6 +15,7 @@ def lan_lobby_screen(Screen):
                     Screen.toggle_fullscreen()
         
         back_button = Screen.menu_button_rect((127, 25, 255),     (0.05, 0.1, 0.2, 0.2))
+        # Handle adding active players to screen
         if (pygame.mouse.get_just_released()[0]):
             if (back_button):
                 running = False

@@ -26,8 +26,13 @@ def client():
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((server_ip, 36258))
 
+    message = "Player_Name"
+    client.send(message.encode('utf-8'))
     while True:
-        message = "Hello Gamer"
-        client.send(message.encode('utf-8'))
-        response = client.recv(1024).decode('utf-8')
-        print(f"Server: {response}")
+        try:
+            response = client.recv(1024).decode('utf-8')
+            if not response:
+                continue
+            print(f"Server: {response}")
+        except:
+            print("Failed to recieve message")
