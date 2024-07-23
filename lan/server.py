@@ -7,6 +7,7 @@ class Server:
 
     def __init__(self):
         self.clients = []
+        self.usr_names = []
         self.threads = []
         self.stop_event = False
 
@@ -56,11 +57,17 @@ class Server:
     def handle_client(self, client_socket):
         print("handle_client: started")
         client_socket.settimeout(1)
+        player_name_recieved = False
         while not self.stop_event:
             try:
                 message = client_socket.recv(1024).decode('utf-8')
-                if not message:
+                if player_name_recieved == False:
+                    self.usr_names.append(message)
+                    player_name_recieved = True
+                elif not message:
                     continue
+                elif message == "player_count":
+                    client_socket.send(str(self.get_player_list()).encode())
                 print(f"Received: {message}")
                 broadcast_message(f"Broadcast: {message}", client_socket)
             except socket.timeout:
@@ -88,6 +95,9 @@ class Server:
         for thread in self.threads:
             thread.join()
             print("Joined a thread")
+    
+    def get_player_list(self):
+        return str(len(self.usr_names)) + ",".join(self.usr_names)
 
     def host(self, seed):
         discover_thread = threading.Thread(target=self.discover_server)

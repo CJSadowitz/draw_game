@@ -12,7 +12,7 @@ from menus.settings_menu import settings_screen
 from menus.online_menu import online_screen
 from menus.auto_aspr import Screen
 from menus.lan_lobby import lan_lobby_screen
-from lan.client import client
+from lan.client import Client
 from lan.server import Server
 
 def main():
@@ -33,9 +33,12 @@ def main():
             case "lan":
                 try:
                     server.stop()
+                    client.stop()
+
                     del server
+                    del client
                 except:
-                    print("Server DNE")
+                    print("Server/Client DNE")
                 display = lan_screen(Screen)
             case "settings":
                 display = settings_screen(Screen)
@@ -43,32 +46,27 @@ def main():
                 server = Server()
                 host_thread = threading.Thread(target=server.host, args=(59,))
                 host_thread.start()
-                time.sleep(1)
-                # client_thread = threading.Thread(target=client)
-                # client_thread.start()
-                display = lan_lobby_screen(Screen)
-                # if display == "lan": # Shut down the servers
-                
-                # Show lobby of current players
-                # Go to play logic (Host starts game)
+                time.sleep(0.5)
+                client = Client()
+                client_thread = threading.Thread(target=client.client)
+                client_thread.start()
+                time.sleep(0.5)
+                player_list = []
+                while display == "host":
+                    player_list = client.get_player_list()
+                    if player_list:
+                        break
+                display = lan_lobby_screen(Screen, player_list)
             case "connect":
-                client_thread = threading.Thread(target=client)
+                client = Client()
+                client_thread = threading.Thread(target=client.client)
                 client_thread.start()
                 display = lan_lobby_screen(Screen)
-                # Show window to join avalible servers
-                # Once joined show the lobby of current players (Cannot start game)
-            case "lanplay":
-                break
-                # join the server as a client, play begins
             case "matchmaking":
                 break
             case "private":
                 break
     pygame.quit()
-    # LAN Game connections
-    """Handle creating a server on hosts machine, and joining it as a client,"""
-    # P2P matchmaking :D
-    """Good luck buddy"""
 
 if __name__ == "__main__":
     main()
