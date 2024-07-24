@@ -14,59 +14,73 @@ from menus.auto_aspr import Screen
 from menus.lan_lobby import lan_lobby_screen
 from lan.client import Client
 from lan.server import Server
+from Menu import Menu
+from Button import Button
 
 def main():
-    running = True
-    display = "main_menu"
-    Screen()
-    # Menu Logic
-    while running:
-        match display:
-            case "quit":
-                running = False
-            case "main_menu":
-                display = title_screen(Screen)
-            case "play":
-                display = play_options_screen(Screen)
-            case "online":
-                display = online_screen(Screen)
-            case "lan":
-                try:
-                    server.stop()
-                    client.stop()
 
-                    del server
-                    del client
-                except:
-                    print("Server/Client DNE")
-                display = lan_screen(Screen)
-            case "settings":
-                display = settings_screen(Screen)
-            case "host":
-                server = Server()
-                host_thread = threading.Thread(target=server.host, args=(59,))
-                host_thread.start()
-                time.sleep(0.5)
-                client = Client()
-                client_thread = threading.Thread(target=client.client)
-                client_thread.start()
-                time.sleep(0.5)
-                player_list = []
-                while display == "host":
-                    player_list = client.get_player_list()
-                    if player_list:
-                        break
-                display = lan_lobby_screen(Screen, player_list)
-            case "connect":
-                client = Client()
-                client_thread = threading.Thread(target=client.client)
-                client_thread.start()
-                display = lan_lobby_screen(Screen)
-            case "matchmaking":
-                break
-            case "private":
-                break
+    main_menu = Menu()
+    main_menu.buttons.append(Button((10, 100, 100), (0, 0.2, 0.4, 0.4)))
+    Screen()
+
+    menu_thread = threading.Thread(target=main_menu.thread)
+    menu_thread.start()
+    # Main menu logic
+    while main_menu.run == True:
+        time.sleep(1)
+    # running = True
+    # display = "main_menu"
+    # Screen()
+
+    # # Menu Logic
+    # while running:
+    #     match display:
+    #         case "quit":
+    #             running = False
+    #         case "main_menu":
+    #             display = title_screen(Screen)
+    #         case "play":
+    #             display = play_options_screen(Screen)
+    #         case "online":
+    #             display = online_screen(Screen)
+    #         case "lan":
+    #             try:
+    #                 server.stop()
+    #                 client.stop()
+
+    #                 del server
+    #                 del client
+    #             except:
+    #                 print("Server/Client DNE")
+    #             display = lan_screen(Screen)
+    #         case "settings":
+    #             display = settings_screen(Screen)
+    #         case "host":
+    #             server = Server()
+    #             host_thread = threading.Thread(target=server.host, args=(59,))
+    #             host_thread.start()
+    #             time.sleep(0.5)
+    #             client = Client()
+    #             client_thread = threading.Thread(target=client.client)
+    #             client_thread.start()
+    #             time.sleep(0.5)
+    #             player_list = []
+    #             while display == "host":
+    #                 player_list = client.get_player_list()
+    #                 if player_list:
+    #                     break
+    #             display = lan_lobby_screen(Screen, player_list)
+    #         case "connect":
+    #             client = Client()
+    #             client_thread = threading.Thread(target=client.client)
+    #             client_thread.start()
+    #             display = lan_lobby_screen(Screen)
+    #         case "matchmaking":
+    #             break
+    #         case "private":
+    #             break
     pygame.quit()
 
 if __name__ == "__main__":
     main()
+    
