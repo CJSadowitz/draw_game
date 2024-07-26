@@ -19,15 +19,49 @@ from Button import Button
 
 def main():
 
-    main_menu = Menu()
-    main_menu.buttons.append(Button((10, 100, 100), (0, 0.2, 0.4, 0.4)))
     Screen()
 
-    menu_thread = threading.Thread(target=main_menu.thread)
-    menu_thread.start()
-    # Main menu logic
-    while main_menu.run == True:
-        time.sleep(1)
+    display = "main_menu"
+    prev = ""
+    while True:
+        match display:
+            case "main_menu":
+                main_menu = Menu()
+                menu_thread = threading.Thread(target=main_menu.thread)
+                menu_thread.start()
+                main_menu.button_objects.append(Button("host", (128, 128, 255),    (0.05, 0.5, 0.4, 0.6)))
+                main_menu.button_objects.append(Button("connect", (255, 128, 16),    (0.05, 0.3, 0.4, 0.4)))
+                main_menu.button_objects.append(Button("quit", (255, 255, 255),   (0.05, 0.1, 0.2, 0.2)))
+
+                while main_menu.run == True:
+                    time.sleep(0.1)
+                display = main_menu.next_menu
+                prev = "main_menu"
+                del main_menu
+            case "host":
+                host_menu = Menu()
+                host_thread = threading.Thread(target=host_menu.thread)
+                host_thread.start()
+                host_menu.button_objects.append(Button("back", (255, 255, 255),   (0.05, 0.1, 0.2, 0.2)))
+
+                while host_menu.run == True:
+                    time.sleep(0.1)
+                if host_menu.next_menu == "back":
+                    display = prev
+                else:
+                    display = host_menu.next_menu
+                    prev = "host"
+                del host_menu
+            case "connect":
+                print("we made it to connect")
+                break
+            case "game":
+                break
+            case "quit":
+                print("we made it to quit")
+                break
+
+
     # running = True
     # display = "main_menu"
     # Screen()
