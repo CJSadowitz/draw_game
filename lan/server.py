@@ -58,32 +58,37 @@ class Server:
 
     def handle_client(self, client_socket):
         print("handle_client: started")
-        client_socket.settimeout(1)
-        player_name_recieved = False
-        game_start_sent = False
+        client_socket.settimeout(1) # allows looping (thread doesn't get stuck)
+        player_name_recieved = False # get first message and doesn't repeat
+
         while not self.stop_event:
             try:
                 message = client_socket.recv(1024).decode('utf-8')
+                # first ever message sent will be the player sending the server its username
                 if player_name_recieved == False:
                     self.usr_names.append(message)
                     player_name_recieved = True
+                
                 elif not message:
                     continue
+                
                 elif message == "player_count": # send list on pull_request
                     client_socket.send(self.get_player_list().encode())
+                    continue
+                
+                elif message == "card_list": # send list on pull_request
+                    client_socket.send(self.get_card_list().encode())
+                    continue
+            
                 if self.game_state == True: # game loop
-                    if game_start_sent == False: # send the message to all connected clients to start the game
-                        print("Game Started: Server")
-                        start_message = "start_game"
-                        self.broadcast_message(start_message)
-                        game_start_sent = True
-                        continue
-                    elif message == "card_list": # send list on pull_request
-                        client_socket.send(self.get_card_list().encode())
+                    # send the message to all connected clients to start the game
+                    start_message = "start_game"
+                    self.broadcast_message(start_message)
                     # process received card (place inside the card_list list)
-                    print(message)
-                    card_list.append(message)
+                    print("Server: " + message)
+                    self.card_list.append(message)
                     print(card_list)
+                    continue
 
             except socket.timeout:
                 continue
@@ -101,8 +106,8 @@ class Server:
         for client in self.clients:
             try:
                 client.send(message.encode('utf-8'))
-            except:
-                print("we should not be here")
+            except Exception as ex:
+                print("Broadcast: " + str(ex))
 
     def stop(self):
         self.stop_event = True
@@ -112,8 +117,9 @@ class Server:
     
     def get_player_list(self):
         csv_players = str(len(self.usr_names)) + ","
-        for i in range(len(self.usr_names)):
-            csv_players += self.usr_names[i] + ","
+        if self.usr_names != "":
+            for i in range(len(self.usr_names)):
+                csv_players += self.usr_names[i] + ","
         return csv_players
 
     def get_card_list(self):
@@ -121,8 +127,7 @@ class Server:
         if self.card_list != "":
             for i in range(len(self.card_list)):
                 csv_cards += self.card_list[i] + ","
-        print(csv_cards)
-        return ""
+        return csv_cards
 
     def start_game(self):
         self.game_state = True

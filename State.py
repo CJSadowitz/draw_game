@@ -65,11 +65,12 @@ class State:
             client_thread.start()
             State.lan_objects_created = True
             time.sleep(0.3)
+        # place the players on the screen
         if State.host_client.player_list != "":
             result_list = [item for item in State.host_client.player_list.split(",") if item]
             for i in range(int(State.host_client.player_list[0])):
                 PlayerDisplay(i, result_list[i]).place_button()
-        # Have fun fixing this :)
+        # Start game button
         if PlayerDisplay.play_button_rect((93, 44, 178), (0.80, 0.05, 0.90, 0.15)) and (pygame.mouse.get_just_released()[0]):
             # Start game logic
             State.host_server.start_game()
@@ -80,7 +81,10 @@ class State:
     def connect():
 
         Screen.draw_rect((10, 10, 10), (0, 0, 1, 1))
-        if State.lan_objects_created == False:
+        # initialize the client for connection
+        # Currently must join after the lobby has been created
+        # Back button does not clear server/client threads
+        if State.lan_objects_created == False: 
             State.host_client = Client()
             client_thread = threading.Thread(target=State.host_client.client)
             client_thread.start()
@@ -97,3 +101,16 @@ class State:
     @staticmethod
     def game():
         Screen.draw_rect((137, 15, 199), (0, 0, 1, 1))
+        print("We are in 'game' State")
+        time.sleep(1)
+        """simply pass in the card to move into this, server will update move list and send it to all clients"""
+        # State.host_client.play_move("r1") # This tells the client to send to the server the move to append to the move list
+        # print(State.host_client.get_player_list()) # This gets the player list (which is perm set at game start)
+        # print(State.host_client.get_move_list()) # This gets all moves that were played this game
+        """
+        Note the following list format:
+        player_list: (retrived as string (converted from a list))
+        "size,first_connected_player,second_connected_player,"
+        move_list: (retrived as string (converted from a list))
+        "size,first_played_card,second_played_card,"
+        """

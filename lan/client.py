@@ -56,14 +56,21 @@ class Client():
         time.sleep(0.2)
         while self.is_active:
             try:
+                # recieves seed from the server
                 if self.first_message == False:
                     response = client.recv(1024).decode('utf-8')
                     if not response:
                         continue
                     self.player_id_seed = response
                     self.first_message = True
+                
+                if self.move != "": # a card was added
+                        client.send(self.move.encode('utf-8'))
+                        self.move = "" # reset the move so server doesn't get it more than once
+                        time.sleep(0.1)
+                
                 elif self.in_game == False: # get player count to display players in lobby
-                    player_count_pull_request = "player_count"
+                    player_count_pull_request = "player_count" # one of the connections keeps calling this
                     client.send(player_count_pull_request.encode('utf-8'))
                     response = client.recv(1024).decode('utf-8')
                     if response == "start_game": # server said to start the game
@@ -75,21 +82,17 @@ class Client():
                         continue
                     self.player_list = response
                     time.sleep(0.2)
+                
                 elif self.in_game == True: # Now playing the game
                     player_move_pull_request = "card_list" # get the card list from the server
-                    print("do we keep sending this?")
                     time.sleep(0.2)
                     client.send(player_move_pull_request.encode('utf-8'))
                     response = client.recv(1024).decode('utf-8')
                     if not response:
                         continue
                     else:
-                        print(response) # the card list that was received from the server
+                        # the card list that was received from the server
                         self.move_list = response
-                    if self.move != "": # a card was added
-                        client.send(self.move.encode('utf-8'))
-                        self.move = "" # reset the move so server doesn't get it more than once
-                        time.sleep(0.1)
             except Exception as ex: # for some reason it times out.
                 print("Client: " + str(ex))
                 continue
