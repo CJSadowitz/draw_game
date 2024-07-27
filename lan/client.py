@@ -17,9 +17,11 @@ class Client():
         self.is_active = True
         self.in_game = False
         self.first_message = False
-        self.move_list = []
-        self.player_list = []
+        self.move_list = ""
+        self.player_list = ""
         self.player_id_seed = ""
+
+        self.move = ""
 
     def stop(self):
         self.is_active = False
@@ -29,6 +31,9 @@ class Client():
     
     def get_player_list(self):
         return self.player_list
+    """  """
+    def play_move(self, card):
+        self.move = card # card is taken as a string
 
     def find_server(self):
         find_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -46,7 +51,7 @@ class Client():
         client.connect((server_ip, 36258))
         client.settimeout(1)
 
-        message = "Player_1"
+        message = "Player_1" #player id which needs to be changed
         client.send(message.encode('utf-8'))
         time.sleep(0.2)
         while self.is_active:
@@ -57,24 +62,35 @@ class Client():
                         continue
                     self.player_id_seed = response
                     self.first_message = True
-                elif self.in_game == False:
+                elif self.in_game == False: # get player count to display players in lobby
                     player_count_pull_request = "player_count"
                     client.send(player_count_pull_request.encode('utf-8'))
                     response = client.recv(1024).decode('utf-8')
-                    if response == "start_game":
+                    if response == "start_game": # server said to start the game
+                        print("Game Started: Client")
                         self.in_game = True
+                        time.sleep(0.2)
+                        continue
                     elif not response:
                         continue
                     self.player_list = response
-                    time.sleep(1)
-
-                else:
+                    time.sleep(0.2)
+                elif self.in_game == True: # Now playing the game
+                    player_move_pull_request = "card_list" # get the card list from the server
+                    print("do we keep sending this?")
+                    time.sleep(0.2)
+                    client.send(player_move_pull_request.encode('utf-8'))
                     response = client.recv(1024).decode('utf-8')
-                    if response[0] == 'm': # move list flag
-                        self.move_list = response
                     if not response:
                         continue
-                    print(f"Server: {response}")
-            except:
-                break
+                    else:
+                        print(response) # the card list that was received from the server
+                        self.move_list = response
+                    if self.move != "": # a card was added
+                        client.send(self.move.encode('utf-8'))
+                        self.move = "" # reset the move so server doesn't get it more than once
+                        time.sleep(0.1)
+            except Exception as ex: # for some reason it times out.
+                print("Client: " + str(ex))
+                continue
             

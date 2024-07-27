@@ -9,6 +9,8 @@ class Server:
         self.clients = []
         self.usr_names = []
         self.threads = []
+        self.card_list = []
+        self.game_state = False
         self.stop_event = False
 
     def discover_server(self):
@@ -58,6 +60,7 @@ class Server:
         print("handle_client: started")
         client_socket.settimeout(1)
         player_name_recieved = False
+        game_start_sent = False
         while not self.stop_event:
             try:
                 message = client_socket.recv(1024).decode('utf-8')
@@ -66,10 +69,22 @@ class Server:
                     player_name_recieved = True
                 elif not message:
                     continue
-                elif message == "player_count":
-                    client_socket.send(str(self.get_player_list()).encode())
-                print(f"Received: {message}")
-                broadcast_message(f"Broadcast: {message}", client_socket)
+                elif message == "player_count": # send list on pull_request
+                    client_socket.send(self.get_player_list().encode())
+                if self.game_state == True: # game loop
+                    if game_start_sent == False: # send the message to all connected clients to start the game
+                        print("Game Started: Server")
+                        start_message = "start_game"
+                        self.broadcast_message(start_message)
+                        game_start_sent = True
+                        continue
+                    elif message == "card_list": # send list on pull_request
+                        client_socket.send(self.get_card_list().encode())
+                    # process received card (place inside the card_list list)
+                    print(message)
+                    card_list.append(message)
+                    print(card_list)
+
             except socket.timeout:
                 continue
             except:
@@ -82,13 +97,12 @@ class Server:
         except:
             print("Client DNE")
 
-    def broadcast_message(self, message, sender_socket):
+    def broadcast_message(self, message):
         for client in self.clients:
             try:
                 client.send(message.encode('utf-8'))
             except:
-                client.close()
-                self.clients.remove(client)
+                print("we should not be here")
 
     def stop(self):
         self.stop_event = True
@@ -97,7 +111,21 @@ class Server:
             print("Joined a thread")
     
     def get_player_list(self):
-        return str(len(self.usr_names)) + ",".join(self.usr_names)
+        csv_players = str(len(self.usr_names)) + ","
+        for i in range(len(self.usr_names)):
+            csv_players += self.usr_names[i] + ","
+        return csv_players
+
+    def get_card_list(self):
+        csv_cards = str(len(self.card_list)) + ","
+        if self.card_list != "":
+            for i in range(len(self.card_list)):
+                csv_cards += self.card_list[i] + ","
+        print(csv_cards)
+        return ""
+
+    def start_game(self):
+        self.game_state = True
 
     def host(self, seed):
         discover_thread = threading.Thread(target=self.discover_server)

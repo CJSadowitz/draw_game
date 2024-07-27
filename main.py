@@ -5,115 +5,81 @@ import pygame
 import threading
 import time
 
-from menus.main_menu import title_screen
-from menus.play_menu import play_options_screen
-from menus.lan_menu import lan_screen
-from menus.settings_menu import settings_screen
-from menus.online_menu import online_screen
-from menus.auto_aspr import Screen
-from menus.lan_lobby import lan_lobby_screen
 from lan.client import Client
 from lan.server import Server
-from Menu import Menu
 from Button import Button
+from State import State
+from Events import check_events
+from Screen import Screen
 
 def main():
 
+    # PROGRAM:DRAW (v1.0; July 2024)
+    # Brendan Brooks, Dawson Hawk, Colin Sadowitz, Carter Scott
+
     Screen()
+    State()
 
-    display = "main_menu"
-    prev = ""
-    while True:
-        match display:
-            case "main_menu":
-                main_menu = Menu()
-                menu_thread = threading.Thread(target=main_menu.thread)
-                menu_thread.start()
-                main_menu.button_objects.append(Button("host", (128, 128, 255),    (0.05, 0.5, 0.4, 0.6)))
-                main_menu.button_objects.append(Button("connect", (255, 128, 16),    (0.05, 0.3, 0.4, 0.4)))
-                main_menu.button_objects.append(Button("quit", (255, 255, 255),   (0.05, 0.1, 0.2, 0.2)))
+    Button(
+        game_state="bouncing_draw_logo",
 
-                while main_menu.run == True:
-                    time.sleep(0.1)
-                display = main_menu.next_menu
-                prev = "main_menu"
-                del main_menu
-            case "host":
-                host_menu = Menu()
-                host_thread = threading.Thread(target=host_menu.thread)
-                host_thread.start()
-                host_menu.button_objects.append(Button("back", (255, 255, 255),   (0.05, 0.1, 0.2, 0.2)))
+        center_coords_tuple=(0, 0.125),
+        height=0.125,
+        w_h_ratio=4,
 
-                while host_menu.run == True:
-                    time.sleep(0.1)
-                if host_menu.next_menu == "back":
-                    display = prev
-                else:
-                    display = host_menu.next_menu
-                    prev = "host"
-                del host_menu
-            case "connect":
-                print("we made it to connect")
-                break
-            case "game":
-                break
-            case "quit":
-                print("we made it to quit")
-                break
+        four_colors_list=[(255, 0, 255), (255, 255, 255), None, None],
+        text="      Host      ", text_four_colors_list=[(0, 0, 0), (255, 0, 255), None, None],
+
+        set_game_state_to="host",
+    )
+
+    Button(
+        game_state="bouncing_draw_logo",
+
+        center_coords_tuple=(0, -0.125),
+        height=0.125,
+        w_h_ratio=4,
+
+        four_colors_list=[(0, 255, 0), (255, 255, 255), None, None],
+        text="    Connect    ", text_four_colors_list=[(0, 0, 0), (0, 255, 0), None, None],
+
+        set_game_state_to="connect"
+    )
+
+    Button(
+        game_state="host",
+
+        center_coords_tuple=(0, -0.375),
+        height=0.125,
+        w_h_ratio=3,
+
+        four_colors_list=[(100, 100, 100), (255, 255, 255), None, None],
+        text="    Back    ", text_four_colors_list=[(0, 0, 0), (0, 0, 255), None, None],
+
+        set_game_state_to="bouncing_draw_logo",
+    )
+
+    Button(
+        game_state="connect",
+
+        center_coords_tuple=(0, -0.375),
+        height=0.125,
+        w_h_ratio=3,
+
+        four_colors_list=[(100, 100, 100), (255, 255, 255), None, None],
+        text="    Back    ", text_four_colors_list=[(0, 0, 0), (0, 0, 255), None, None],
+
+        set_game_state_to="bouncing_draw_logo"
+    )
 
 
-    # running = True
-    # display = "main_menu"
-    # Screen()
+    # Game LOOP :D
 
-    # # Menu Logic
-    # while running:
-    #     match display:
-    #         case "quit":
-    #             running = False
-    #         case "main_menu":
-    #             display = title_screen(Screen)
-    #         case "play":
-    #             display = play_options_screen(Screen)
-    #         case "online":
-    #             display = online_screen(Screen)
-    #         case "lan":
-    #             try:
-    #                 server.stop()
-    #                 client.stop()
+    while check_events():
 
-    #                 del server
-    #                 del client
-    #             except:
-    #                 print("Server/Client DNE")
-    #             display = lan_screen(Screen)
-    #         case "settings":
-    #             display = settings_screen(Screen)
-    #         case "host":
-    #             server = Server()
-    #             host_thread = threading.Thread(target=server.host, args=(59,))
-    #             host_thread.start()
-    #             time.sleep(0.5)
-    #             client = Client()
-    #             client_thread = threading.Thread(target=client.client)
-    #             client_thread.start()
-    #             time.sleep(0.5)
-    #             player_list = []
-    #             while display == "host":
-    #                 player_list = client.get_player_list()
-    #                 if player_list:
-    #                     break
-    #             display = lan_lobby_screen(Screen, player_list)
-    #         case "connect":
-    #             client = Client()
-    #             client_thread = threading.Thread(target=client.client)
-    #             client_thread.start()
-    #             display = lan_lobby_screen(Screen)
-    #         case "matchmaking":
-    #             break
-    #         case "private":
-    #             break
-    pygame.quit()
+        State.run_current_game_state()
+
+        Button.draw_all_buttons()
 
 if __name__ == "__main__":
     main()
