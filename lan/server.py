@@ -47,7 +47,7 @@ class Server:
                 self.clients.append(client_socket)
                 print(f"Connection from {addr}")
                 # Send new player their id and seed
-                first_message = str(self.clients.index(client_socket)) + str(seed)
+                first_message = str(self.clients.index(client_socket)) + "," + str(seed)
                 client_socket.send(first_message.encode('utf-8'))
                 client_handler = threading.Thread(target=self.handle_client, args=(client_socket,))
                 self.threads.append(client_handler)

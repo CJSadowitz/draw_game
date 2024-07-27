@@ -34,6 +34,9 @@ class Client():
     """  """
     def play_move(self, card):
         self.move = card # card is taken as a string
+    
+    def get_player_id_seed(self):
+        return self.player_id_seed
 
     def find_server(self):
         find_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

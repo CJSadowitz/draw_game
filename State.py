@@ -107,10 +107,15 @@ class State:
         # State.host_client.play_move("r1") # This tells the client to send to the server the move to append to the move list
         # print(State.host_client.get_player_list()) # This gets the player list (which is perm set at game start)
         # print(State.host_client.get_move_list()) # This gets all moves that were played this game
+        # print(State.host_client.get_player_id_seed())
         """
         Note the following list format:
         player_list: (retrived as string (converted from a list))
         "size,first_connected_player,second_connected_player,"
+
         move_list: (retrived as string (converted from a list))
         "size,first_played_card,second_played_card,"
+
+        player_id_seed:
+        "player_id,seed"
         """
