@@ -9,7 +9,6 @@ Maybe make an easy editor such that any player can intuitively make a game? </br
 - Player
 - Table
 - Card
-</br>
 ### All Components
 - Hand *list of sorted cards*
 - Score *score*
@@ -20,25 +19,21 @@ Maybe make an easy editor such that any player can intuitively make a game? </br
 - Status
 - Renderable
 - Position
-</br>
 ### Player Components
 - Hand
 - Score
 - Turn Number
 - Status
 - Render Static
-</br>
 ### Card Components
 - Value
 - Type
 - Render Dynamic
-</br>
 ### Table Components
 - Deck
 - Turn Counter
-</br>
 ### System
-#### All of the exectuable actions
+**All Exectuable Actions** </br>
 Every System actions upon entities using its components? </br>
 All systems are ran on the server? Player just sends commands? </br>
 - *Player* uses *Card*
