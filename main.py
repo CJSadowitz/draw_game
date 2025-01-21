@@ -1,7 +1,8 @@
 import pygame
+from src.Game import Game
 
 def main():
-	print ("Hello World!")
+	game = Game()
 
 if __name__ == "__main__":
 	main()
