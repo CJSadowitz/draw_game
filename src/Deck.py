@@ -21,11 +21,11 @@ class Wild(Enum):
 
 class Deck:
 	def __init__(self):
-		red = [f"RED_{card.name}" for card in Color]
-		green = [f"GREEN_{card.name}" for card in Color]
-		blue = [f"BLUE_{card.name}" for card in Color]
-		yellow = [f"YELLOW_{card.name}" for card in Color]
-		wild = [f"WILD_{card.name}" for card in Wild]
+		red = [f"R_{card.name}" for card in Color]
+		green = [f"G_{card.name}" for card in Color]
+		blue = [f"B_{card.name}" for card in Color]
+		yellow = [f"Y_{card.name}" for card in Color]
+		wild = [f"W_{card.name}" for card in Wild]
 		list_of_cards = [
 			red, red[1:],
 			green, green[1:],
