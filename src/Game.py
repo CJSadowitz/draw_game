@@ -31,6 +31,18 @@ class Game:
 		self.player_names = names
 
 	# Methods/Game Logic
+	def check_move(self, move):
+		# move json:
+		#	{
+		#		player_name: "name",
+		#		move: 0-4 (card moves) or 5 (draw),
+		#	}
+		data = json.loads(move)
+		if (data["player_name"] not in self.player_names):
+			return False
+		moves = self.get_legal_moves(data["player_name"])
+		return moves[data["move"]]
+
 	def shuffle_deck(self):
 		size = len(self.deck)
 		for i in range(size):
@@ -42,7 +54,7 @@ class Game:
 			print ("No players provided")
 			return
 
-		if (self.starting_hand * len(self.player_names) > len(self.deck)):
+		if (self.starting_hand * len(self.player_names) > len(self.deck) + 1):
 			print ("Starting hand is too large, lower the size")
 			return
 
@@ -54,20 +66,67 @@ class Game:
 			wild = []
 			for i in range(self.starting_hand):
 				card = self.deck[i]
-				if card[0] == 'R':
+				if card[0] == 'r':
 					red.append(card)
-				elif card[0] == 'G':
+				elif card[0] == 'g':
 					green.append(card)
-				elif card[0] == 'B':
+				elif card[0] == 'b':
 					blue.append(card)
-				elif card[0] == 'Y':
+				elif card[0] == 'y':
 					yellow.append(card)
-				elif card[0] == 'W':
+				elif card[0] == 'w':
 					wild.append(card)
 				self.deck.remove(card)
 			self.player_hands[player] = [red, green, blue, yellow, wild]
 
+		self.discard = self.deck[0]
+		self.deck.remove(self.deck[0])
+
 	# Getters
+	def get_legal_moves(self, name):
+		# [R, G, B, Y, W, D]
+		# All Booleans
+		if (name not in self.player_names):
+			return None
+		moves = []
+		for i in range(5):
+			moves.append(self.player_hands[name][i])
+
+		discard = self.discard
+		legal_moves = []
+
+		for list in moves:
+			if (list == []):
+				print ("[]", end=" ")
+				continue
+			print (list[0], end=" ")
+		print ("")
+
+		for i in range(4):
+			if (moves[i] == []):
+				legal_moves.append(False)
+				continue
+			# Check Color
+			if (discard[0] == moves[i][0][0]):
+				legal_moves.append(True)
+			# Check Number
+			elif (discard[1:] == moves[i][0][1:]):
+				legal_moves.append(True)
+			else:
+				legal_moves.append(False)
+
+		if (True in legal_moves):
+			legal_moves.append(False)
+		else:
+			legal_moves.append(True)
+
+		if (len(self.deck) > 0):
+			legal_moves.append(True)
+		else:
+			legal_moves.append(False)
+
+		return legal_moves
+
 	def get_game_state(self):
 		data = {}
 		for player in self.player_hands:
@@ -87,3 +146,6 @@ class Game:
 		data["deck"] = len(self.deck)
 
 		return json.dumps(data)
+
+	def get_player_card_list(self, name):
+		pass
