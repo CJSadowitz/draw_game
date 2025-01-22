@@ -30,19 +30,20 @@ class Game:
 	def set_player_names(self, names):
 		self.player_names = names
 
-	# Methods/Game Logic
+	# Server Rules
 	def check_move(self, move):
 		# move json:
 		#	{
-		#		player_name: "name",
+		#		uuid: "name",
 		#		move: 0-4 (card moves) or 5 (draw),
 		#	}
 		data = json.loads(move)
-		if (data["player_name"] not in self.player_names):
+		if (data["uuid"] not in self.player_names):
 			return False
-		moves = self.get_legal_moves(data["player_name"])
+		moves = self.get_legal_moves(data["uuid"])
 		return moves[data["move"]]
 
+	# Game Logic
 	def shuffle_deck(self):
 		size = len(self.deck)
 		for i in range(size):
@@ -95,13 +96,6 @@ class Game:
 		discard = self.discard
 		legal_moves = []
 
-		for list in moves:
-			if (list == []):
-				print ("[]", end=" ")
-				continue
-			print (list[0], end=" ")
-		print ("")
-
 		for i in range(4):
 			if (moves[i] == []):
 				legal_moves.append(False)
@@ -127,7 +121,18 @@ class Game:
 
 		return legal_moves
 
-	def get_game_state(self):
+	# Messages
+	def game_state_message(self):
+		#	{
+		#		p1_cards: [],
+		#		p2_cards: [],
+		#		...,
+		#		p1_deck_lengths: [],
+		#		p2_deck_lengths: [],
+		#		...,
+		#		discard: [length, discard_list]
+		#		draw: len(self.deck)
+		#	}
 		data = {}
 		for player in self.player_hands:
 			name = player
@@ -147,5 +152,24 @@ class Game:
 
 		return json.dumps(data)
 
-	def get_player_card_list(self, name):
-		pass
+	def legal_moves_message(self, name):
+		#	{
+		#		uuid: name,
+		#		legal_moves: [r,g,b,y,w,d] (All booleans)
+		#	}
+		data = {}
+		data["uuid"] = name
+		legal_moves = self.get_legal_moves(name)
+		data["legal_moves"] = legal_moves
+		return json.dumps(data)
+
+	def player_card_list_message(self, name):
+		#	{
+		#		uuid: name,
+		#		cards: [[], [], [], [], []]
+		#	}
+		data = {}
+		data["uuid"] = name
+		cards = self.player_hands[name]
+		data["cards"] = cards
+		return json.dumps(data)
