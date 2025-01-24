@@ -20,10 +20,18 @@ class Game:
 		# player: [[r], [g], [b], [y], [w]]
 		self.player_hands = {}
 
-		self.turn = None
-
 		# Provide more data in game_state to requesting user
 		self.more_info = [False, ""]
+
+		# Player Information
+		self.legal_moves = []
+		self.current_cards = []
+
+		self.active_players = []
+
+		# Turn Information
+		self.turn = None
+		self.turn_direction = 1
 
 	# Setters
 	def set_deck(self, deck_list):
@@ -73,13 +81,78 @@ class Game:
 		moves = self.get_legal_moves(data["uuid"])
 		return moves[data["move"]]
 
+	def make_move(self, move):
+		# After Validation
+		data = json.loads(move)
+		move = data["move"]
+		turn_index = self.active_players.index(data["uuid"])
+		if (move == 5): # Draw Cards
+			drawn_cards = []
+			playable_bool = False
+			while len(self.deck) > 0:
+				drawn_card = self.deck[0]
+				self.deck.remove(drawn_card)
+				drawn_cards.append(drawn_card)
+				if (self.playable(drawn_card)):
+					playable_bool = True
+					break
+			if (playable_bool == False):
+				# Clear Hand
+				for card_lists in self.player_hands[data["uuid"]]:
+					self.discard.extends(card_lists)
+					self.player_hands[data["uuid"]][card_lists].clear()
+				# Remove Player
+				self.active_players.remove(data["uuid"]
+			# Update Turn
+			self.turn = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
+			return
+		card = self.player_hands[data["uuid"]][data["move"]][0]
+		self.player_hands[data["uuid"]][data["move"]].remove(card)
+		self.discard.append(card)
+		if (card[0] != 'w'):
+			match (card[1:]):
+				case (10): # skip
+					self.turn = self.active_players[self.active_players[(turn_index + 2 * self.turn_direction) % len(self.active_players)]
+				case (11): # reverse
+					self.turn_direction *= -1
+					self.turn = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
+				case (12): # draw two
+					player = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
+					self.turn = self.active_players[self.active_players[(turn_index + 2 * self.turn_direction) % len(self.active_players)]
+					# Give 'player' two cards
+			# Regular Card
+		else:
+			match (card[1:]):
+				case (0):
+					pass
+				case (1):
+					pass
+		# Turn Logic
+		# Update Discard
+		# Update Deck
+		# Update Player Hand
+
 	# Game Logic
 
-	def update_game(self):
-		# Upon valid move, update the game HANDLE TURN LOGIC
-		# AND send relevant messages
-		pass
+	def update_game(self, message):
+		# After Validation and Is Game State Message
+		data = json.loads(message)
+		self.deck = data["deck"]
+		self.discard = data["discard"]
+		self.turn = data["turn"]
+		if ("legal" in data):
+			self.legal_moves = data["legal"]["legal_moves"]
+		if ("cards" in data):
+			self.current_cards = data["cards"]["cards"]
 
+	def playable(self, card):
+		if (card[0] == self.discard[len(self.discard) - 1][0]):
+			return True
+		if (card[1:] == self.discard[len(self.discard) - 1][1:]):
+			return True
+		return False
+
+	# Host Side Only
 	def shuffle_deck(self):
 		size = len(self.deck)
 		for i in range(size):
@@ -116,7 +189,9 @@ class Game:
 				self.deck.remove(card)
 			self.player_hands[player] = [red, green, blue, yellow, wild]
 
-		self.discard = self.deck[0]
+		self.active_players = self.player_names
+
+		self.discard.append(self.deck[0])
 		self.deck.remove(self.deck[0])
 		self.turn = self.player_names[0]
 
