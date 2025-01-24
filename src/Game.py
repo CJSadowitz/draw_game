@@ -20,6 +20,11 @@ class Game:
 		# player: [[r], [g], [b], [y], [w]]
 		self.player_hands = {}
 
+		self.turn = None
+
+		# Provide more data in game_state to requesting user
+		self.more_info = [False, ""]
+
 	# Setters
 	def set_deck(self, deck_list):
 		self.deck = deck_list
@@ -31,12 +36,37 @@ class Game:
 		self.player_names = names
 
 	# Server Rules
+
+	# request json:
+	#	{
+	#		uuid: "name",
+	#		type: "more_info"
+	#	}
+
+	def game_state_request(self, message):
+		data = json.loads(message)
+		if (data["uuid"] not in self.player_names or data["uuid"] != self.turn):
+			return False
+		if (data["type"] == "more_info"):
+			self.more_info = [True, data["uuid"]]
+		return True
+
+	# move json:
+	#	{
+	#		uuid: "name",
+	#		move: 0-4 (card moves) or 5 (draw),
+	#	}
+
+	def check_turn(self, move):
+		data = json.loads(move)
+		if (data["uuid"] not in self.player_names):
+			return False
+		if self.turn == data["uuid"]:
+			return True
+		else:
+			return False
+
 	def check_move(self, move):
-		# move json:
-		#	{
-		#		uuid: "name",
-		#		move: 0-4 (card moves) or 5 (draw),
-		#	}
 		data = json.loads(move)
 		if (data["uuid"] not in self.player_names):
 			return False
@@ -44,6 +74,12 @@ class Game:
 		return moves[data["move"]]
 
 	# Game Logic
+
+	def update_game(self):
+		# Upon valid move, update the game HANDLE TURN LOGIC
+		# AND send relevant messages
+		pass
+
 	def shuffle_deck(self):
 		size = len(self.deck)
 		for i in range(size):
@@ -82,6 +118,7 @@ class Game:
 
 		self.discard = self.deck[0]
 		self.deck.remove(self.deck[0])
+		self.turn = self.player_names[0]
 
 	# Getters
 	def get_legal_moves(self, name):
@@ -132,6 +169,7 @@ class Game:
 		#		...,
 		#		discard: [length, discard_list]
 		#		draw: len(self.deck)
+		#		turn: uuid
 		#	}
 		data = {}
 		for player in self.player_hands:
@@ -149,6 +187,12 @@ class Game:
 			data[name + "_len"]   = lengths
 		data["discard"] = [len(self.discard), self.discard]
 		data["deck"] = len(self.deck)
+		data["turn"] = self.turn
+
+		if (self.more_info[0] == True):
+			data["legal"] = self.legal_moves_message(self.more_info[1])
+			data["cards"] = self.player_card_list_message(self.more_info[1])
+			self.more_info = [False, ""]
 
 		return json.dumps(data)
 
@@ -161,7 +205,7 @@ class Game:
 		data["uuid"] = name
 		legal_moves = self.get_legal_moves(name)
 		data["legal_moves"] = legal_moves
-		return json.dumps(data)
+		return data
 
 	def player_card_list_message(self, name):
 		#	{
@@ -172,4 +216,4 @@ class Game:
 		data["uuid"] = name
 		cards = self.player_hands[name]
 		data["cards"] = cards
-		return json.dumps(data)
+		return data
