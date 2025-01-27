@@ -1,4 +1,5 @@
 from src.Deck import Deck
+from src.Turn import Turn, Turn_Type
 import random
 import string
 import json
@@ -31,7 +32,7 @@ class Game:
 
 		# Turn Information
 		self.turn = None
-		self.turn_direction = 1
+		self.turn_dir = 1
 
 	# Setters
 	def set_deck(self, deck_list):
@@ -105,8 +106,11 @@ class Game:
 				# Remove Player
 				self.active_players.remove(data["uuid"])
 			# Update Turn
-			self.turn = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
+			self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.REGULAR, self.turn_dir)
+			# self.turn = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
 			return
+
+		# Play Card
 		card = self.player_hands[data["uuid"]][data["move"]][0]
 		self.player_hands[data["uuid"]][data["move"]].remove(card)
 		self.discard.append(card)
@@ -114,25 +118,25 @@ class Game:
 		if (card[0] == 'w'):
 			card_type = int(card[1:])
 			if (card_type == 0):
-				self.turn = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
+				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.REGULAR, self.turn_dir)
 				# Change Color Logic ################################################################
 			if (card_type == 1): # Draw Four AND Change Color
-				self.turn = self.active_players[(turn_index + 2 * self.turn_direction) % len(self.active_players)]
-				player_who_gets_cards = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
+				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.DRAW_WILD, self.turn_dir)
+				player_who_gets_cards = self.active_players[turn_index + self.turn_dir]
 			return
 
 		match (int(card[1:])):
 			case (10): # skip
-				self.turn = self.active_players[(turn_index + 2 * self.turn_direction) % len(self.active_players)]
+				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.SKIP, self.turn_dir)
 			case (11): # reverse
-				self.turn_direction *= -1
-				self.turn = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
+				self.turn_dir *= -1
+				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.REVERSE, self.turn_dir)
 			case (12): # draw two
-				player = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
-				self.turn = self.active_players[(turn_index + 2 * self.turn_direction) % len(self.active_players)]
+				player = self.active_players[turn_index + self.turn_dir]
+				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.DRAW_TWO, self.turn_dir)
 				# Give 'player' two cards
 				# BELOW NEEDS TO BE CHANGED SUCH THAT "PLAYER" IS THE ONE WHO LOSES
-				if (self.deck < 2): # Lose condition
+				if (len(self.deck) < 2): # Lose condition
 					for card_lists in self.player_hands[data["uuid"]]:
 						self.discard.extends(card_lists)
 						self.player_hands[data["uuid"]][card_lists].clear() ###########################
@@ -140,11 +144,11 @@ class Game:
 					self.active_players.remove(data["uuid"])
 				else:
 					# Give player the cards
-					player_who_gets_cards = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
+					player_who_gets_cards = self.active_players[turn_index + self.turn_dir]
 					# Add Cards Logic
 			case _:
 				# Regular Card
-				self.turn = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
+				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.REGULAR, self.turn_dir)
 
 		# Turn Logic
 		# Update Discard
