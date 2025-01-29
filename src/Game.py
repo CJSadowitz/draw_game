@@ -77,10 +77,11 @@ class Game:
 
 	def check_move(self, move):
 		data = json.loads(move)
+		move = int(data["move"])
 		if (data["uuid"] not in self.player_names):
 			return False
 		moves = self.get_legal_moves(data["uuid"])
-		return moves[data["move"]]
+		return moves[move]
 
 	def make_move(self, move):
 		# After Validation
@@ -90,6 +91,7 @@ class Game:
 		if (move == 5): # Draw Cards
 			drawn_cards = []
 			playable_bool = False
+			# Draw Cards until player get a playable card
 			while len(self.deck) > 0:
 				drawn_card = self.deck[0]
 				self.deck.remove(drawn_card)
@@ -97,12 +99,16 @@ class Game:
 				if (self.playable(drawn_card)):
 					playable_bool = True
 					# Add cards to player hands
+					self.add_cards(drawn_cards, self.turn)
 					break
+			# Player can no longer draw cards
 			if (playable_bool == False):
 				# Clear Hand
+				index = 0
 				for card_lists in self.player_hands[data["uuid"]]:
-					self.discard.extends(card_lists)
-					self.player_hands[data["uuid"]][card_lists].clear() ###########################################
+					self.discard.extend(card_lists)
+					self.player_hands[data["uuid"]][index].clear() ###########################################
+					index += 1
 				# Remove Player
 				self.active_players.remove(data["uuid"])
 			# Update Turn
@@ -114,6 +120,7 @@ class Game:
 		self.player_hands[data["uuid"]][move].remove(card)
 		self.discard.append(card)
 
+		# Wild Cards
 		if (card[0] == 'w'):
 			card_type = int(card[1:])
 			if (card_type == 0):
@@ -124,6 +131,7 @@ class Game:
 				player_who_gets_cards = self.active_players[turn_index + self.turn_dir]
 			return
 
+		# Colored Cards
 		match (int(card[1:])):
 			case (10): # skip
 				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.SKIP, self.turn_dir)
@@ -131,14 +139,16 @@ class Game:
 				self.turn_dir *= -1
 				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.REVERSE, self.turn_dir)
 			case (12): # draw two
-				player = self.active_players[turn_index + self.turn_dir]
+				player = self.active_players[turn_index + self.turn_dir % len(self.active_players)]
 				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.DRAW_TWO, self.turn_dir)
 				# Give 'player' two cards
 				# BELOW NEEDS TO BE CHANGED SUCH THAT "PLAYER" IS THE ONE WHO LOSES
 				if (len(self.deck) < 2): # Lose condition
+					index = 0
 					for card_lists in self.player_hands[data["uuid"]]:
-						self.discard.extends(card_lists)
-						self.player_hands[data["uuid"]][card_lists].clear() ###########################
+						self.discard.extend(card_lists)
+						self.player_hands[data["uuid"]][index].clear() ###########################
+						index += 1
 					# Remove Player
 					self.active_players.remove(data["uuid"])
 				else:
@@ -149,11 +159,7 @@ class Game:
 				# Regular Card
 				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.REGULAR, self.turn_dir)
 
-		# Update Deck
-		# Update Player Hand
-
 	# Game Logic
-
 	def update_game(self, message):
 		# After Validation and Is Game State Message
 		data = json.loads(message)
@@ -177,6 +183,29 @@ class Game:
 		if (card[1:] == self.discard[len(self.discard) - 1][1:]):
 			return True
 		return False
+
+	def add_cards(self, card_list, player):
+		red = []
+		green = []
+		blue = []
+		yellow = []
+		wild = []
+		for card in card_list:
+			if (card[0] == 'r'):
+				red.append(card)
+			elif (card[0] == 'g'):
+				green.append(card)
+			elif (card[0] == 'b'):
+				blue.append(card)
+			elif (card[0] == 'y'):
+				yellow.append(card)
+			elif (card[0] == 'w'):
+				wild.append(card)
+		cards = [red, green, blue, yellow, wild]
+		index = 0
+		for card_list in self.player_hands[player]:
+			card_list.extend(cards[index])
+			index = index + 1
 
 	# Host Side Only
 	def shuffle_deck(self):
