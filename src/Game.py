@@ -85,7 +85,7 @@ class Game:
 	def make_move(self, move):
 		# After Validation
 		data = json.loads(move)
-		move = data["move"]
+		move = int(data["move"])
 		turn_index = self.active_players.index(data["uuid"])
 		if (move == 5): # Draw Cards
 			drawn_cards = []
@@ -107,12 +107,11 @@ class Game:
 				self.active_players.remove(data["uuid"])
 			# Update Turn
 			self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.REGULAR, self.turn_dir)
-			# self.turn = self.active_players[(turn_index + self.turn_direction) % len(self.active_players)]
 			return
 
 		# Play Card
-		card = self.player_hands[data["uuid"]][data["move"]][0]
-		self.player_hands[data["uuid"]][data["move"]].remove(card)
+		card = self.player_hands[data["uuid"]][move][0]
+		self.player_hands[data["uuid"]][move].remove(card)
 		self.discard.append(card)
 
 		if (card[0] == 'w'):
@@ -150,8 +149,6 @@ class Game:
 				# Regular Card
 				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.REGULAR, self.turn_dir)
 
-		# Turn Logic
-		# Update Discard
 		# Update Deck
 		# Update Player Hand
 
@@ -168,9 +165,15 @@ class Game:
 		if ("cards" in data):
 			self.current_cards = data["cards"]["cards"]
 
+
 	def playable(self, card):
+		if card == []:
+			return False
+		card = card[0]
+		# Check Color i.e. Wild is always playable...
 		if (card[0] == self.discard[len(self.discard) - 1][0]):
 			return True
+		# Check Number for everything except wild... but it would be handled above
 		if (card[1:] == self.discard[len(self.discard) - 1][1:]):
 			return True
 		return False
@@ -182,13 +185,23 @@ class Game:
 			random_index = random.randint(0, size - 1)
 			self.deck[i], self.deck[random_index] = self.deck[random_index], self.deck[i]
 
+	def reset_deck(self):
+		# Double Check the logic
+		discard_card = self.discard[-1]
+		self.discard.remove(discard_card)
+		# Put all of the discard into the deck
+		self.deck.extend(self.discard)
+		self.discard.clear()
+		# Place back the discard
+		self.discard.append(discard_card)
+
 	def set_starting_hands(self):
 		if (self.player_names == None):
-			print ("No players provided")
+			print ("SET_STARTING_HANDS: No players provided")
 			return
 
 		if (self.starting_hand * len(self.player_names) > len(self.deck) + 1):
-			print ("Starting hand is too large, lower the size")
+			print ("SET_STARTING_HANDS: Starting hand is too large, lower the size")
 			return
 
 		for player in self.player_names:
@@ -214,6 +227,8 @@ class Game:
 
 		self.active_players = self.player_names
 
+		# Handle Wild Starting Card
+
 		self.discard.append(self.deck[0])
 		self.deck.remove(self.deck[0])
 		self.turn = self.player_names[0]
@@ -232,23 +247,15 @@ class Game:
 		legal_moves = []
 
 		for i in range(4):
-			if (moves[i] == []):
-				legal_moves.append(False)
-				continue
-			# Check Color
-			if (discard[0] == moves[i][0][0]):
-				legal_moves.append(True)
-			# Check Number
-			elif (discard[1:] == moves[i][0][1:]):
-				legal_moves.append(True)
-			else:
-				legal_moves.append(False)
+			legal_moves.append(self.playable(moves[i]))
 
+		# Wild Condition
 		if (True in legal_moves):
 			legal_moves.append(False)
 		else:
 			legal_moves.append(True)
 
+		# Draw Condition
 		if (len(self.deck) > 0):
 			legal_moves.append(True)
 		else:
