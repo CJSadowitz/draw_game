@@ -68,7 +68,7 @@ class Game:
 
 	def check_turn(self, move):
 		data = json.loads(move)
-		if (data["uuid"] not in self.player_names):
+		if (str(data["uuid"]) not in self.player_names):
 			return False
 		if self.turn == data["uuid"]:
 			return True
@@ -78,7 +78,7 @@ class Game:
 	def check_move(self, move):
 		data = json.loads(move)
 		move = int(data["move"])
-		if (data["uuid"] not in self.player_names):
+		if (str(data["uuid"]) not in self.player_names):
 			return False
 		moves = self.get_legal_moves(data["uuid"])
 		return moves[move]
@@ -113,7 +113,7 @@ class Game:
 				self.active_players.remove(data["uuid"])
 			# Update Turn
 			self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.REGULAR, self.turn_dir)
-			return
+			return True
 
 		# Play Card
 		card = self.player_hands[data["uuid"]][move][0]
@@ -129,7 +129,7 @@ class Game:
 			if (card_type == 1): # Draw Four AND Change Color
 				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.DRAW_WILD, self.turn_dir)
 				player_who_gets_cards = self.active_players[turn_index + self.turn_dir]
-			return
+			return True
 
 		# Colored Cards
 		match (int(card[1:])):
@@ -158,6 +158,7 @@ class Game:
 			case _:
 				# Regular Card
 				self.turn = Turn.update_turn(self.active_players, turn_index, Turn_Type.REGULAR, self.turn_dir)
+		return True
 
 	# Game Logic
 	def update_game(self, message):
@@ -307,7 +308,7 @@ class Game:
 		#	}
 		data = {}
 		for player in self.player_hands:
-			name = player
+			name = str(player)
 			cards = []
 			lengths = []
 			for i in range(5):
