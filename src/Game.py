@@ -54,6 +54,8 @@ class Game:
 
 	def game_state_request(self, message):
 		data = json.loads(message)
+		if ("type" not in data):
+			return True
 		if (data["uuid"] not in self.player_names or data["uuid"] != self.turn):
 			return False
 		if (data["type"] == "more_info"):
@@ -77,6 +79,10 @@ class Game:
 
 	def check_move(self, move):
 		data = json.loads(move)
+
+		if ("move" not in data):
+			return True
+
 		move = int(data["move"])
 		if (str(data["uuid"]) not in self.player_names):
 			return False
@@ -86,6 +92,10 @@ class Game:
 	def make_move(self, move):
 		# After Validation
 		data = json.loads(move)
+
+		if ("move" not in data):
+			return True
+
 		move = int(data["move"])
 		turn_index = self.active_players.index(data["uuid"])
 		if (move == 5): # Draw Cards
