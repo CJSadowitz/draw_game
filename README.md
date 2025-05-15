@@ -8,6 +8,10 @@ cd draw_game
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+git clone https://github.com/CJSadowitz/abstract_turn_based_networking.git
+cd abstract_turn_based_networking
+pip install .
+cd ..
 ```
 
 ## Run
